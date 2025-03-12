@@ -1,0 +1,54 @@
+---
+title: "Assignment 2"
+format: html
+editor: visual
+---
+
+```{r}
+#install and load packages
+library(flexplot)
+library(tidyverse)
+library(haven)
+
+#load in data
+
+Data <- read_sav("PSYR6003.A2.sav")
+view(Data) #visually inspect data 
+
+#recode sex from string to factor, using dplyr 
+
+RecodeData<- Data  %>% mutate(sex.Dummy = if_else(sex=="Male", 1, 0))
+head(RecodeData)
+Data<-mutate(RecodeData,sexfactor= as_factor(sex.Dummy))
+#sex is now a factor, will dbl version of sex. 
+Data <- mutate(Data, sex.Dummy = NULL)
+view(Data)
+# sex is now a factor variable with female =0 and male =1 , chr variable kept for label reminder 
+
+
+```
+
+Now will create variables for each subscale
+
+```{r}
+
+#subscale total for socially prescribed perfection (SPP)
+Data <- Data %>%
+  mutate(spp_total = rowMeans(select(.,mps.SPP1.3y,mps.SPP2.3y,mps.SPP3.3y,mps.SPP4.3y,mps.SPP5.3y), na.rm = TRUE))
+view(Data)
+
+#subscale total for PANAS 
+Data <- Data %>%
+  mutate(panas_total = rowMeans(select(.,guilt1.3y,guilt2.3y,guilt3.3y,dep1.3y,dep2.3y,dep3.3y,fear1.3y,fear2.3y,fear3.3y,host1.3y,host2.3y,host3.3y), na.rm = TRUE))
+view(Data)
+
+#subscale total for cons. but first , reverse code!max +min - value
+Data <- Data %>%
+  mutate(reverse_disorganized= (7+1)- tipm.CONS2.3y)
+view(Data)
+
+#total for consc subscale
+cleandata<- Data%>%
+    mutate(cons_total = rowMeans(select(., tipm.CONS1.3y,reverse_disorganized), na.rm = TRUE))
+View(cleandata)
+```
