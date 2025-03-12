@@ -9,6 +9,8 @@ editor: visual
 library(flexplot)
 library(tidyverse)
 library(haven)
+install.packages("Hmisc")
+library(Hmisc)
 
 #load in data
 
@@ -25,7 +27,7 @@ Data <- mutate(Data, sex.Dummy = NULL)
 view(Data)
 # sex is now a factor variable with female =0 and male =1 , chr variable kept for label reminder 
 
-
+head(Data)
 ```
 
 Now will create variables for each subscale
@@ -51,4 +53,55 @@ view(Data)
 cleandata<- Data%>%
     mutate(cons_total = rowMeans(select(., tipm.CONS1.3y,reverse_disorganized), na.rm = TRUE))
 View(cleandata)
+```
+
+part 2, descriptive stats and bivariate correlations
+
+```{r}
+summarise(cleandata,
+          mean(spp_total),
+          mean(panas_total),
+          mean(cons_total),
+          sd(spp_total),
+          sd(panas_total),
+          sd(cons_total))
+#correlations
+
+
+correlations <- cleandata %>%
+  select(spp_total,panas_total,cons_total)
+cor_results <- Hmisc::rcorr(as.matrix(correlations))
+view(cor_results)
+
+####table
+cor_df <- cor_results$r %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column(var = "Variable") %>%
+  pivot_longer(-Variable, names_to = "Variable2", values_to = "Correlation")
+
+pval_df <- cor_results$P %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column(var = "Variable") %>%
+  pivot_longer(-Variable, names_to = "Variable2", values_to = "P_Value")
+
+# Merge correlation and p-values, format in APA style
+cor_table <- left_join(cor_df, pval_df, by = c("Variable", "Variable2")) %>%
+  mutate(
+    Correlation = sprintf("%.2f", Correlation),   # Round to 2 decimal places
+    P_Value = ifelse(P_Value < 0.001, "< .001", sprintf("%.3f", P_Value)), # APA formatting
+    APA_Correlation = paste0(Correlation, ifelse(P_Value < 0.05, "*", ""), 
+                              ifelse(P_Value < 0.01, "*", ""), 
+                              ifelse(P_Value < 0.001, "*", "")) # Add * for significance
+  ) %>%
+  select(Variable, Variable2, APA_Correlation) %>%
+  pivot_wider(names_from = Variable2, values_from = APA_Correlation)
+
+# Convert to an APA-style table using `flextable`
+cor_table %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  autofit()
+print(cor_table)
+
+
 ```
