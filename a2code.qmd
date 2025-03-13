@@ -111,7 +111,53 @@ Part 3, glm for hypotheses
 ```{r}
 
 ##visualize
-
+flexplot(panas_total~1, data=cleandata)
+flexplot(spp_total~1, data=cleandata)
+flexplot(cons_total~1, data=cleandata)
+flexplot(sexfactor~1,data=cleandata)
 flexplot(panas_total~spp_total, data=cleandata)
-added.plot(panas_total~spp_total, data=cleandata,lm_formula=panas_total~sexfactor+cons_total) 
+added.plot(panas_total~spp_total, data=cleandata,lm_formula=panas_total~sexfactor+cons_total)+
+            geom_text(aes(label = RespondentId), vjust = -1, size = 3)  
+
+###outlier identified on AVP that is causing linearity violation. Experiment with removing outlier
+
+cleandata1<-cleandata %>%
+  filter(RespondentId!=3993016)
+
+##visualize without outlier
+flexplot(panas_total~1, data=cleandata1)
+flexplot(spp_total~1, data=cleandata1)
+flexplot(cons_total~1, data=cleandata1)
+flexplot(sexfactor~1,data=cleandata1)
+flexplot(panas_total~spp_total, data=cleandata1)
+added.plot(panas_total~sexfactor+cons_total+spp_total, data=cleandata1)
+
+fullmodel1<- lm(panas_total~spp_total+cons_total+sexfactor,data=cleandata1)
+reduced1<- lm(panas_total~1,data=cleandata1)
+visualize(fullmodel1) #checking assumptions 
+visualize(reduced1,plots="residuals")
+summary(fullmodel1)
+estimates(fullmodel1)
+model.comparison(reduced1,fullmodel1)
+```
+
+Now for hypothesis 2, SPP predict NA over and above sex and cons
+
+```{r}
+#visualize
+flexplot(panas_total~spp_total| cons_total+sexfactor, data=cleandata1,
+         method="lm")
+#we have full model from above model for hypothesis 1 , now we want to see that SPP compares over and above - we will use reduced model of negaffect~spp_total vs full model above
+
+#not sure I am making the right comparison. we want to see spp predict above and beyond so either full model is SPP + cons +sex with reduced being cons+sex OR full model is cons+ sex
+
+reduced2<- lm(panas_total~cons_total+sexfactor,data=cleandata1)
+model.comparison(fullmodel1,reduced2)
+visualize(fullmodel2)
+visualize(reduced2)
+estimates(fullmodel2)
+
+estimates(reduced2)
+
+###or shouuld i be comparing lm(panas_total~spp_total) with lm(panas_total~cons_total,sexfactor)
 ```
