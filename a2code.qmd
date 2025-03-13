@@ -105,3 +105,13 @@ print(cor_table)
 
 
 ```
+
+Part 3, glm for hypotheses
+
+```{r}
+
+##visualize
+
+flexplot(panas_total~spp_total, data=cleandata)
+added.plot(panas_total~spp_total, data=cleandata,lm_formula=panas_total~sexfactor+cons_total) 
+```
