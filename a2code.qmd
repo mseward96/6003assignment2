@@ -152,7 +152,11 @@ summary(fullmodel1)
 estimates(fullmodel1)
 model.comparison(reduced1,fullmodel1)
 
-apa.reg.table(fullmodel1, filename= "fullmodel.doc", table.number = 2, prop.var.conf.level = 0.95)
+apa.reg.table(fullmodel1, filename= "fullmodel.doc", table.number = 2, prop.var.conf.level = 0.95) #apa table for regression coefficients 
+
+#export assumption figures.
+assumptionsfig1<- visualize(fullmodel1)
+ggsave("flexplot1.png", plot = assumptionsfig1, width = 8, height = 6, dpi = 300)
 ```
 
 Hypothesis 1 is supported as the full model is a better fit than the reduced model
@@ -179,5 +183,7 @@ block2<-fullmodel1
 
 apa.reg.table(block1,block2, table.number = 3,filename= "modelcomparison.doc") #table comparing regression coefficients
 
+assumptionsfig2<- visualize(reduced2) +theme_classic()
+ggsave("flexplot3.png", plot = assumptionsfig2, width = 8, height = 6, dpi = 300)
 
 ```
