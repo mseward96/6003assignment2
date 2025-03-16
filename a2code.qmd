@@ -5,12 +5,13 @@ editor: visual
 ---
 
 ```{r}
-#install and load packages
+#library in packages, INTSALL if needed
 library(flexplot)
+library(apaTables)
 library(tidyverse)
 library(haven)
-install.packages("Hmisc")
 library(Hmisc)
+library()
 
 #load in data
 
@@ -22,10 +23,8 @@ view(Data) #visually inspect data
 RecodeData<- Data  %>% mutate(sex.Dummy = if_else(sex=="Male", 1, 0))
 head(RecodeData)
 Data<-mutate(RecodeData,sexfactor= as_factor(sex.Dummy))
-#sex is now a factor, will dbl version of sex. 
-Data <- mutate(Data, sex.Dummy = NULL)
-view(Data)
-# sex is now a factor variable with female =0 and male =1 , chr variable kept for label reminder 
+#sexfactor is now a factor variable for sex
+
 
 head(Data)
 ```
@@ -58,57 +57,69 @@ View(cleandata)
 part 2, descriptive stats and bivariate correlations
 
 ```{r}
-summarise(cleandata,
-          mean(spp_total),
-          mean(panas_total),
-          mean(cons_total),
-          sd(spp_total),
-          sd(panas_total),
-          sd(cons_total))
-#correlations
 
 
-correlations <- cleandata %>%
-  select(spp_total,panas_total,cons_total)
-cor_results <- Hmisc::rcorr(as.matrix(correlations))
-view(cor_results)
 
-####table
-cor_df <- cor_results$r %>%
-  as.data.frame() %>%
-  tibble::rownames_to_column(var = "Variable") %>%
-  pivot_longer(-Variable, names_to = "Variable2", values_to = "Correlation")
 
-pval_df <- cor_results$P %>%
-  as.data.frame() %>%
-  tibble::rownames_to_column(var = "Variable") %>%
-  pivot_longer(-Variable, names_to = "Variable2", values_to = "P_Value")
+correlations <- select(cleandata, panas_total, cons_total, spp_total, sex.Dummy)
 
-# Merge correlation and p-values, format in APA style
-cor_table <- left_join(cor_df, pval_df, by = c("Variable", "Variable2")) %>%
-  mutate(
-    Correlation = sprintf("%.2f", Correlation),   # Round to 2 decimal places
-    P_Value = ifelse(P_Value < 0.001, "< .001", sprintf("%.3f", P_Value)), # APA formatting
-    APA_Correlation = paste0(Correlation, ifelse(P_Value < 0.05, "*", ""), 
-                              ifelse(P_Value < 0.01, "*", ""), 
-                              ifelse(P_Value < 0.001, "*", "")) # Add * for significance
-  ) %>%
-  select(Variable, Variable2, APA_Correlation) %>%
-  pivot_wider(names_from = Variable2, values_from = APA_Correlation)
+apa.cor.table(correlations, table.number = 1, filename = "correlations.doc")
 
-# Convert to an APA-style table using `flextable`
-cor_table %>%
-  flextable() %>%
-  theme_vanilla() %>%
-  autofit()
-print(cor_table)
+cleandata %>% #getting Male Female frequency for write up
+  count(sexfactor)
+
+# summarise(cleandata,
+#           mean(spp_total),
+#           mean(panas_total),
+#           mean(cons_total),
+#           sd(spp_total),
+#           sd(panas_total),
+#           sd(cons_total))
+# #correlations
+# 
+# 
+# correlations <- cleandata %>%
+#   select(spp_total,panas_total,cons_total,sexfactor)
+# cor_results <- Hmisc::rcorr(as.matrix(correlations))
+# view(cor_results)
+# 
+# ####table
+# cor_df <- cor_results$r %>%
+#   as.data.frame() %>%
+#   tibble::rownames_to_column(var = "Variable") %>%
+#   pivot_longer(-Variable, names_to = "Variable2", values_to = "Correlation")
+# 
+# pval_df <- cor_results$P %>%
+#   as.data.frame() %>%
+#   tibble::rownames_to_column(var = "Variable") %>%
+#   pivot_longer(-Variable, names_to = "Variable2", values_to = "P_Value")
+# 
+# # Merge correlation and p-values, format in APA style
+# cor_table <- left_join(cor_df, pval_df, by = c("Variable", "Variable2")) %>%
+#   mutate(
+#     Correlation = sprintf("%.2f", Correlation),   # Round to 2 decimal places
+#     P_Value = ifelse(P_Value < 0.001, "< .001", sprintf("%.3f", P_Value)), # APA formatting
+#     APA_Correlation = paste0(Correlation, ifelse(P_Value < 0.05, "*", ""), 
+#                               ifelse(P_Value < 0.01, "*", ""), 
+#                               ifelse(P_Value < 0.001, "*", "")) # Add * for significance
+#   ) %>%
+#   select(Variable, Variable2, APA_Correlation) %>%
+#   pivot_wider(names_from = Variable2, values_from = APA_Correlation)
+# 
+# # Convert to an APA-style table using `flextable`
+# cor_table %>%
+#   flextable() %>%
+#   theme_vanilla() %>%
+#   autofit()
+# print(cor_table)
 
 
 ```
 
-Part 3, glm for hypotheses
+Part 3, glm for hypothesis 1
 
 ```{r}
+
 
 ##visualize
 flexplot(panas_total~1, data=cleandata)
@@ -116,6 +127,7 @@ flexplot(spp_total~1, data=cleandata)
 flexplot(cons_total~1, data=cleandata)
 flexplot(sexfactor~1,data=cleandata)
 flexplot(panas_total~spp_total, data=cleandata)
+#ID OUTLIER WITH LABEL
 added.plot(panas_total~spp_total, data=cleandata,lm_formula=panas_total~sexfactor+cons_total)+
             geom_text(aes(label = RespondentId), vjust = -1, size = 3)  
 
@@ -128,7 +140,7 @@ cleandata1<-cleandata %>%
 flexplot(panas_total~1, data=cleandata1)
 flexplot(spp_total~1, data=cleandata1)
 flexplot(cons_total~1, data=cleandata1)
-flexplot(sexfactor~1,data=cleandata1)
+flexplot(sexfactor~1, data=cleandata1)
 flexplot(panas_total~spp_total, data=cleandata1)
 added.plot(panas_total~sexfactor+cons_total+spp_total, data=cleandata1)
 
@@ -139,7 +151,11 @@ visualize(reduced1,plots="residuals")
 summary(fullmodel1)
 estimates(fullmodel1)
 model.comparison(reduced1,fullmodel1)
+
+apa.reg.table(fullmodel1, filename= "fullmodel.doc", table.number = 2, prop.var.conf.level = 0.95)
 ```
+
+Hypothesis 1 is supported as the full model is a better fit than the reduced model
 
 Now for hypothesis 2, SPP predict NA over and above sex and cons
 
@@ -147,17 +163,21 @@ Now for hypothesis 2, SPP predict NA over and above sex and cons
 #visualize
 flexplot(panas_total~spp_total| cons_total+sexfactor, data=cleandata1,
          method="lm")
-#we have full model from above model for hypothesis 1 , now we want to see that SPP compares over and above - we will use reduced model of negaffect~spp_total vs full model above
+#we have full model from above model for hypothesis 1 , now we want to see that SPP compares over and above - we will use reduced model of negaffect~cons+sex vs full model, which includes spp above
 
-#not sure I am making the right comparison. we want to see spp predict above and beyond so either full model is SPP + cons +sex with reduced being cons+sex OR full model is cons+ sex
 
 reduced2<- lm(panas_total~cons_total+sexfactor,data=cleandata1)
 model.comparison(fullmodel1,reduced2)
-visualize(fullmodel2)
+visualize(fullmodel1)
 visualize(reduced2)
-estimates(fullmodel2)
+estimates(fullmodel1)
 
 estimates(reduced2)
 
-###or shouuld i be comparing lm(panas_total~spp_total) with lm(panas_total~cons_total,sexfactor)
+block1<- reduced2
+block2<-fullmodel1
+
+apa.reg.table(block1,block2, table.number = 3,filename= "modelcomparison.doc") #table comparing regression coefficients
+
+
 ```
