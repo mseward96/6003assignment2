@@ -62,7 +62,7 @@ part 2, calculating descriptive stats and bivariate correlations as per assignme
 
 
 
-
+#correlations via apaTables
 correlations <- select(cleandata, panas_total, cons_total, spp_total, sex.Dummy)
 
 apa.cor.table(correlations, table.number = 1, filename = "correlations.doc")
@@ -132,21 +132,25 @@ flexplot(panas_total~spp_total| cons_total+sexfactor, data=cleandata1,
          method="lm")
 #we have full model from above model for hypothesis 1 , now we want to see that SPP compares over and above - we will use reduced model of negaffect~cons+sex vs full model, which includes spp above
 
-
+#build reduced model
 reduced2<- lm(panas_total~cons_total+sexfactor,data=cleandata1)
-model.comparison(fullmodel1,reduced2)
+model.comparison(fullmodel1,reduced2) #compare
 visualize(fullmodel1)
 visualize(reduced2)
 estimates(fullmodel1)
 
 estimates(reduced2)
 
+#blocking for reg table
 block1<- reduced2
 block2<-fullmodel1
 
 apa.reg.table(block1,block2, table.number = 3,filename= "modelcomparison.doc") #table comparing regression coefficients
 
+#exporting figure
 assumptionsfig2<- visualize(reduced2) +theme_classic()
 ggsave("flexplot3.png", plot = assumptionsfig2, width = 8, height = 6, dpi = 300)
 
 ```
+
+Hyp 2 is supported as aic, bic, bayes, and rsq all favour the full model, and SPP predicts over and above other predictors.
