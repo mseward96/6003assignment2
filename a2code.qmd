@@ -1,8 +1,10 @@
 ---
 title: "Assignment 2"
-format: html
+format: html 
 editor: visual
 ---
+
+Load in packages and data, recode sex as factor
 
 ```{r}
 #library in packages, INTSALL if needed
@@ -10,8 +12,8 @@ library(flexplot)
 library(apaTables)
 library(tidyverse)
 library(haven)
-library(Hmisc)
-library()
+
+
 
 #load in data
 
@@ -29,7 +31,7 @@ Data<-mutate(RecodeData,sexfactor= as_factor(sex.Dummy))
 head(Data)
 ```
 
-Now will create variables for each subscale
+Now will create variables for each subscale as per assignment instructions.
 
 ```{r}
 
@@ -54,7 +56,7 @@ cleandata<- Data%>%
 View(cleandata)
 ```
 
-part 2, descriptive stats and bivariate correlations
+part 2, calculating descriptive stats and bivariate correlations as per assignment instructions
 
 ```{r}
 
@@ -65,63 +67,19 @@ correlations <- select(cleandata, panas_total, cons_total, spp_total, sex.Dummy)
 
 apa.cor.table(correlations, table.number = 1, filename = "correlations.doc")
 
-cleandata %>% #getting Male Female frequency for write up
+cleandata %>% #getting Male Female frequency for descriptives write up
   count(sexfactor)
 
-# summarise(cleandata,
-#           mean(spp_total),
-#           mean(panas_total),
-#           mean(cons_total),
-#           sd(spp_total),
-#           sd(panas_total),
-#           sd(cons_total))
-# #correlations
-# 
-# 
-# correlations <- cleandata %>%
-#   select(spp_total,panas_total,cons_total,sexfactor)
-# cor_results <- Hmisc::rcorr(as.matrix(correlations))
-# view(cor_results)
-# 
-# ####table
-# cor_df <- cor_results$r %>%
-#   as.data.frame() %>%
-#   tibble::rownames_to_column(var = "Variable") %>%
-#   pivot_longer(-Variable, names_to = "Variable2", values_to = "Correlation")
-# 
-# pval_df <- cor_results$P %>%
-#   as.data.frame() %>%
-#   tibble::rownames_to_column(var = "Variable") %>%
-#   pivot_longer(-Variable, names_to = "Variable2", values_to = "P_Value")
-# 
-# # Merge correlation and p-values, format in APA style
-# cor_table <- left_join(cor_df, pval_df, by = c("Variable", "Variable2")) %>%
-#   mutate(
-#     Correlation = sprintf("%.2f", Correlation),   # Round to 2 decimal places
-#     P_Value = ifelse(P_Value < 0.001, "< .001", sprintf("%.3f", P_Value)), # APA formatting
-#     APA_Correlation = paste0(Correlation, ifelse(P_Value < 0.05, "*", ""), 
-#                               ifelse(P_Value < 0.01, "*", ""), 
-#                               ifelse(P_Value < 0.001, "*", "")) # Add * for significance
-#   ) %>%
-#   select(Variable, Variable2, APA_Correlation) %>%
-#   pivot_wider(names_from = Variable2, values_from = APA_Correlation)
-# 
-# # Convert to an APA-style table using `flextable`
-# cor_table %>%
-#   flextable() %>%
-#   theme_vanilla() %>%
-#   autofit()
-# print(cor_table)
 
 
 ```
 
-Part 3, glm for hypothesis 1
+Part 3, glm for hypothesis 1, sex, conscientiousness, and SPP predicting negative affect
 
 ```{r}
 
 
-##visualize
+##visualizing univariate distributions and model
 flexplot(panas_total~1, data=cleandata)
 flexplot(spp_total~1, data=cleandata)
 flexplot(cons_total~1, data=cleandata)
@@ -131,8 +89,9 @@ flexplot(panas_total~spp_total, data=cleandata)
 added.plot(panas_total~spp_total, data=cleandata,lm_formula=panas_total~sexfactor+cons_total)+
             geom_text(aes(label = RespondentId), vjust = -1, size = 3)  
 
-###outlier identified on AVP that is causing linearity violation. Experiment with removing outlier
+###outlier identified on AVP that is causing linearity violation. 
 
+#removing outlier case
 cleandata1<-cleandata %>%
   filter(RespondentId!=3993016)
 
@@ -143,6 +102,10 @@ flexplot(cons_total~1, data=cleandata1)
 flexplot(sexfactor~1, data=cleandata1)
 flexplot(panas_total~spp_total, data=cleandata1)
 added.plot(panas_total~sexfactor+cons_total+spp_total, data=cleandata1)
+
+#looks better than before
+
+#run GLM for full and reduced model and get coefficients
 
 fullmodel1<- lm(panas_total~spp_total+cons_total+sexfactor,data=cleandata1)
 reduced1<- lm(panas_total~1,data=cleandata1)
