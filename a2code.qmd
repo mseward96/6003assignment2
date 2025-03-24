@@ -107,7 +107,7 @@ added.plot(panas_total~sexfactor+cons_total+spp_total, data=cleandata1)
 
 #run GLM for full and reduced model and get coefficients
 
-fullmodel1<- lm(panas_total~spp_total+cons_total+sexfactor,data=cleandata1)
+fullmodel1<- lm(panas_total~cons_total+sexfactor+spp_total,data=cleandata1)
 reduced1<- lm(panas_total~1,data=cleandata1)
 visualize(fullmodel1) #checking assumptions 
 visualize(reduced1,plots="residuals")
